@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI算法多任务综合性能测试报告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f7fa;--card:#fff;--text:#1a1a2e;--text2:#555;--border:#e0e6ed;
+  --primary:#4361ee;--primary-light:#eef1ff;--accent:#f72585;
+  --gold:#ffd700;--silver:#c0c0c0;--bronze:#cd7f32;--top4:#64b5f6;--top5:#81c784;
+  --shadow:0 2px 12px rgba(0,0,0,.08);--radius:10px;
+  --tab-bg:#e8edf3;--tab-active:#4361ee;--tab-active-text:#fff;
+  --chart-grid:rgba(0,0,0,.06);
+}
+[data-theme="dark"]{
+  --bg:#0f0f23;--card:#1a1a3e;--text:#e0e0e0;--text2:#aaa;--border:#2a2a5a;
+  --primary:#7b8cff;--primary-light:#1a1a3e;--accent:#ff6eb4;
+  --shadow:0 2px 12px rgba(0,0,0,.3);--tab-bg:#1a1a3e;--tab-active:#7b8cff;
+  --chart-grid:rgba(255,255,255,.08);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;transition:all .3s}
+.container{max-width:1400px;margin:0 auto;padding:20px}
+header{background:linear-gradient(135deg,#4361ee,#7209b7,#f72585);color:#fff;padding:40px 0;text-align:center;position:relative;overflow:hidden}
+header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.1) 0%,transparent 60%);animation:pulse 8s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+header h1{font-size:2.2em;font-weight:700;position:relative}
+header p{opacity:.9;margin-top:8px;position:relative;font-size:1.1em}
+.theme-toggle{position:fixed;top:20px;right:20px;z-index:1000;background:var(--card);border:2px solid var(--border);border-radius:30px;padding:8px 16px;cursor:pointer;font-size:18px;box-shadow:var(--shadow);transition:all .3s}
+.theme-toggle:hover{transform:scale(1.1)}
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:24px 0}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:20px;text-align:center;box-shadow:var(--shadow);border-left:4px solid var(--primary);transition:transform .2s}
+.stat-card:hover{transform:translateY(-3px)}
+.stat-card .num{font-size:2em;font-weight:700;color:var(--primary)}
+.stat-card .label{color:var(--text2);font-size:.9em;margin-top:4px}
+.tabs{display:flex;gap:4px;background:var(--tab-bg);padding:6px;border-radius:12px;margin-bottom:24px;flex-wrap:wrap}
+.tab-btn{padding:10px 20px;border:none;background:transparent;color:var(--text2);border-radius:8px;cursor:pointer;font-size:.95em;font-weight:500;transition:all .2s;white-space:nowrap}
+.tab-btn.active{background:var(--tab-active);color:var(--tab-active-text);box-shadow:0 2px 8px rgba(67,97,238,.3)}
+.tab-btn:hover:not(.active){background:rgba(67,97,238,.1)}
+.tab-content{display:none;animation:fadeIn .3s}
+.tab-content.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--card);border-radius:var(--radius);padding:24px;margin-bottom:24px;box-shadow:var(--shadow)}
+.card h3{color:var(--primary);margin-bottom:16px;font-size:1.2em;display:flex;align-items:center;gap:8px}
+.card h3::before{content:'';width:4px;height:20px;background:var(--primary);border-radius:2px}
+.toolbar{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.search-box{flex:1;min-width:200px;padding:10px 16px;border:2px solid var(--border);border-radius:8px;font-size:.95em;background:var(--card);color:var(--text);transition:border-color .2s}
+.search-box:focus{outline:none;border-color:var(--primary)}
+.filter-group{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-group label{font-size:.85em;color:var(--text2);white-space:nowrap}
+.filter-select{padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:.9em;cursor:pointer}
+.filter-select:focus{outline:none;border-color:var(--primary)}
+.reset-btn{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.9em;transition:all .2s}
+.reset-btn:hover{opacity:.85;transform:scale(1.02)}
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.9em}
+th{background:var(--primary);color:#fff;padding:12px 14px;text-align:left;cursor:pointer;user-select:none;white-space:nowrap;position:sticky;top:0;z-index:2}
+th:hover{background:#3451de}
+th .sort-icon{margin-left:4px;font-size:.75em;opacity:.7}
+th .sort-icon.active{opacity:1}
+td{padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+tr:hover td{background:var(--primary-light)}
+.rank-cell{font-weight:700;text-align:center;width:50px}
+.rank-1{background:linear-gradient(135deg,#fff8e1,#ffd700);color:#7c6600;border-radius:6px}
+.rank-2{background:linear-gradient(135deg,#f5f5f5,#c0c0c0);color:#555;border-radius:6px}
+.rank-3{background:linear-gradient(135deg,#fff3e0,#cd7f32);color:#6d3a00;border-radius:6px}
+.rank-4{background:linear-gradient(135deg,#e3f2fd,#64b5f6);color:#1565c0;border-radius:6px}
+.rank-5{background:linear-gradient(135deg,#e8f5e9,#81c784);color:#2e7d32;border-radius:6px}
+.col-rank{font-weight:700;text-align:center;border-radius:6px;padding:6px 8px;font-size:.85em}
+.col-rank-1{background:linear-gradient(135deg,#fff8e1,#ffd700);color:#7c6600;box-shadow:inset 0 0 0 1px rgba(124,102,0,.15)}
+.col-rank-2{background:linear-gradient(135deg,#f5f5f5,#c0c0c0);color:#555;box-shadow:inset 0 0 0 1px rgba(85,85,85,.15)}
+.col-rank-3{background:linear-gradient(135deg,#fff3e0,#cd7f32);color:#6d3a00;box-shadow:inset 0 0 0 1px rgba(109,58,0,.15)}
+.col-rank-4{background:linear-gradient(135deg,#e3f2fd,#64b5f6);color:#1565c0;box-shadow:inset 0 0 0 1px rgba(21,101,192,.15)}
+.col-rank-5{background:linear-gradient(135deg,#e8f5e9,#81c784);color:#2e7d32;box-shadow:inset 0 0 0 1px rgba(46,125,50,.15)}
+.chart-container{position:relative;height:350px;margin:16px 0}
+.chart-container canvas{max-height:100%}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:900px){.chart-row{grid-template-columns:1fr}}
+.legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:.85em;color:var(--text2)}
+.legend-dot{width:12px;height:12px;border-radius:50%}
+.heatmap-grid{display:grid;gap:4px;margin:16px 0}
+.heatmap-cell{padding:10px;text-align:center;border-radius:6px;font-size:.85em;font-weight:500;color:#fff;transition:transform .2s}
+.heatmap-cell:hover{transform:scale(1.08);z-index:1}
+.heatmap-label{font-size:.8em;color:var(--text2);text-align:center;padding:4px}
+.no-data{text-align:center;padding:40px;color:var(--text2);font-size:1.1em}
+footer{text-align:center;padding:30px;color:var(--text2);font-size:.85em;border-top:1px solid var(--border);margin-top:40px}
+.ablation-select{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.ablation-select button{padding:8px 16px;border:2px solid var(--border);background:var(--card);color:var(--text);border-radius:8px;cursor:pointer;font-size:.9em;transition:all .2s}
+.ablation-select button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.ablation-select button:hover:not(.active){border-color:var(--primary)}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.insight-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border-left:4px solid var(--accent)}
+.insight-card h4{color:var(--accent);margin-bottom:8px}
+.insight-card ul{padding-left:20px;color:var(--text2)}
+.insight-card li{margin:4px 0}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.8em;font-weight:600;margin-right:4px}
+.tag-ml{background:#e3f2fd;color:#1565c0}
+.tag-dl{background:#fce4ec;color:#c62828}
+.tag-cl{background:#e8f5e9;color:#2e7d32}
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <h1>AI算法多任务综合性能测试报告</h1>
+    <p>10种算法 x 4类任务 x 14项指标 | 7维度消融实验 | 2026-05-01 ~ 2026-05-10</p>
+  </div>
+</header>
+<button class="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
+
+<div class="container">
+  <div class="stats-bar">
+    <div class="stat-card"><div class="num">10</div><div class="label">测试算法</div></div>
+    <div class="stat-card"><div class="num">4</div><div class="label">任务类型</div></div>
+    <div class="stat-card"><div class="num">14</div><div class="label">评估指标</div></div>
+    <div class="stat-card"><div class="num">7</div><div class="label">消融维度</div></div>
+    <div class="stat-card"><div class="num">560+</div><div class="label">实验数据点</div></div>
+  </div>
+
+  <div class="tabs" id="mainTabs">
+    <button class="tab-btn active" onclick="switchTab('main')">主实验结果</button>
+    <button class="tab-btn" onclick="switchTab('ablation')">消融实验</button>
+    <button class="tab-btn" onclick="switchTab('summary')">综合分析</button>
+  </div>
+
+  <!-- ==================== 主实验结果 ==================== -->
+  <div class="tab-content active" id="tab-main">
+    <div class="tabs" id="taskTabs">
+      <button class="tab-btn active" onclick="switchTaskTab('img')">图像分类</button>
+      <button class="tab-btn" onclick="switchTaskTab('nlp')">文本分类</button>
+      <button class="tab-btn" onclick="switchTaskTab('reg')">回归预测</button>
+      <button class="tab-btn" onclick="switchTaskTab('rec')">推荐系统</button>
+    </div>
+    <div id="taskPanels"></div>
+  </div>
+
+  <!-- ==================== 消融实验 ==================== -->
+  <div class="tab-content" id="tab-ablation">
+    <div class="ablation-select" id="ablationBtns"></div>
+    <div id="ablationPanels"></div>
+  </div>
+
+  <!-- ==================== 综合分析 ==================== -->
+  <div class="tab-content" id="tab-summary">
+    <div class="card">
+      <h3>算法效率 vs 精度散点图</h3>
+      <div class="chart-container" style="height:400px"><canvas id="scatterChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>跨任务综合表现热力图</h3>
+      <div id="heatmapContainer"></div>
+    </div>
+    <div class="card">
+      <h3>算法类型对比雷达图</h3>
+      <div class="chart-container" style="height:400px"><canvas id="radarChart"></canvas></div>
+    </div>
+    <div class="summary-grid">
+      <div class="insight-card"><h4>最优算法推荐</h4><ul>
+        <li><b>图像分类</b>：Transformer（Accuracy 0.8534）</li>
+        <li><b>文本分类</b>：Transformer（Accuracy 0.9456）</li>
+        <li><b>回归预测</b>：XGBoost（Accuracy 0.8123）</li>
+        <li><b>推荐系统</b>：Transformer（Accuracy 0.8456）</li>
+      </ul></div>
+      <div class="insight-card"><h4>效率-精度权衡</h4><ul>
+        <li><b>高精度</b>：Transformer > ResNet-50 > LSTM</li>
+        <li><b>高效率</b>：XGBoost > Random Forest > CNN</li>
+        <li><b>资源受限</b>：XGBoost > SVM > Random Forest</li>
+      </ul></div>
+      <div class="insight-card"><h4>消融实验关键发现</h4><ul>
+        <li>学习率 1e-3~1e-4 为最优区间</li>
+        <li>增大 Batch Size 提升效率但可能降精度</li>
+        <li>网络深度存在最优值，过深导致过拟合</li>
+        <li>AdamW 在多数场景表现最优</li>
+        <li>数据增强平均提升 3-5% 精度</li>
+      </ul></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>AI算法多任务综合性能测试报告 | 实验环境：NVIDIA A100 80GB × 4 | PyTorch 2.3.0 / TensorFlow 2.16.0</p>
+  <p>实验数据由虚拟环境自动生成，仅供演示使用 | 生成日期：2026-05-11</p>
+</footer>
+
+<script>
+// ==================== 数据定义 ====================
+const COLORS = {
+  primary:['#4361ee','#3a0ca3','#7209b7','#f72585','#4cc9f0','#4895ef','#560bad','#b5179e','#480ca8','#3f37c9'],
+  warm:['#ff6b6b','#ffa07a','#ffd93d','#6bcb77','#4d96ff','#ff6b9d','#c084fc','#fb923c','#38bdf8','#a3e635'],
+  ablation:['#4361ee','#f72585','#7209b7','#4cc9f0','#f77f00','#06d6a0','#118ab2']
+};
+
+const algos = [
+  {name:'SVM',type:'经典ML',params:0.02,flops:0.05},
+  {name:'Random Forest',type:'经典ML',params:0.15,flops:0.30},
+  {name:'KNN',type:'经典ML',params:0.01,flops:0.08},
+  {name:'XGBoost',type:'经典ML',params:0.35,flops:0.60},
+  {name:'CNN',type:'深度学习',params:12.50,flops:15.80},
+  {name:'LSTM',type:'深度学习',params:8.30,flops:22.40},
+  {name:'Transformer',type:'深度学习',params:45.20,flops:86.50},
+  {name:'ResNet-50',type:'深度学习',params:25.60,flops:41.20},
+  {name:'K-Means',type:'聚类',params:0.005,flops:0.12},
+  {name:'DBSCAN',type:'聚类',params:0.003,flops:0.18}
+];
+
+const tasks = {
+  img:{
+    name:'图像分类（CIFAR-100）',icon:'🖼️',
+    data:[
+      {algo:'SVM',acc:.6234,pre:.6102,rec:.6089,f1:.6095,auc:.6512,train:342.5,infer:2.35,throughput:425,gpu:512,cpu:45.2,mem:2048,epoch:1},
+      {algo:'Random Forest',acc:.6891,pre:.6754,rec:.6723,f1:.6738,auc:.7234,train:567.8,infer:3.12,throughput:320,gpu:1024,cpu:78.5,mem:4096,epoch:1},
+      {algo:'KNN',acc:.5876,pre:.5723,rec:.5698,f1:.5710,auc:.6145,train:12.3,infer:8.56,throughput:117,gpu:256,cpu:32.1,mem:8192,epoch:1},
+      {algo:'XGBoost',acc:.7234,pre:.7156,rec:.7089,f1:.7122,auc:.7589,train:845.2,infer:1.89,throughput:529,gpu:2048,cpu:85.3,mem:6144,epoch:1},
+      {algo:'CNN',acc:.8156,pre:.8098,rec:.8045,f1:.8071,auc:.8534,train:2456.3,infer:.85,throughput:1176,gpu:8192,cpu:92.1,mem:3072,epoch:45},
+      {algo:'LSTM',acc:.7823,pre:.7756,rec:.7689,f1:.7722,auc:.8234,train:3125.6,infer:1.23,throughput:813,gpu:6144,cpu:88.7,mem:4096,epoch:62},
+      {algo:'Transformer',acc:.8534,pre:.8467,rec:.8423,f1:.8445,auc:.8912,train:5678.9,infer:2.15,throughput:465,gpu:16384,cpu:95.6,mem:8192,epoch:78},
+      {algo:'ResNet-50',acc:.8423,pre:.8356,rec:.8312,f1:.8334,auc:.8845,train:3456.7,infer:.92,throughput:1087,gpu:12288,cpu:93.4,mem:6144,epoch:52},
+      {algo:'K-Means',acc:.4523,pre:.4312,rec:.4256,f1:.4284,auc:.4834,train:45.6,infer:.45,throughput:2222,gpu:128,cpu:25.6,mem:1024,epoch:1},
+      {algo:'DBSCAN',acc:.4123,pre:.3956,rec:.3889,f1:.3922,auc:.4456,train:89.3,infer:5.67,throughput:176,gpu:256,cpu:38.9,mem:2048,epoch:1}
+    ]
+  },
+  nlp:{
+    name:'文本分类（AG News）',icon:'📝',
+    data:[
+      {algo:'SVM',acc:.8456,pre:.8389,rec:.8345,f1:.8367,auc:.8823,train:456.7,infer:1.56,throughput:641,gpu:512,cpu:52.3,mem:3072,epoch:1},
+      {algo:'Random Forest',acc:.8234,pre:.8167,rec:.8123,f1:.8145,auc:.8678,train:678.9,infer:2.34,throughput:427,gpu:1024,cpu:82.1,mem:5120,epoch:1},
+      {algo:'KNN',acc:.7891,pre:.7823,rec:.7756,f1:.7789,auc:.8345,train:23.4,infer:6.78,throughput:147,gpu:256,cpu:35.6,mem:12288,epoch:1},
+      {algo:'XGBoost',acc:.8678,pre:.8612,rec:.8567,f1:.8589,auc:.9012,train:923.4,infer:1.23,throughput:813,gpu:2048,cpu:88.9,mem:7168,epoch:1},
+      {algo:'CNN',acc:.8912,pre:.8845,rec:.8789,f1:.8817,auc:.9234,train:1856.7,infer:.67,throughput:1493,gpu:6144,cpu:90.5,mem:4096,epoch:35},
+      {algo:'LSTM',acc:.9123,pre:.9056,rec:.9012,f1:.9034,auc:.9456,train:2789.3,infer:.98,throughput:1020,gpu:8192,cpu:91.2,mem:5120,epoch:48},
+      {algo:'Transformer',acc:.9456,pre:.9389,rec:.9345,f1:.9367,auc:.9678,train:4567.8,infer:1.56,throughput:641,gpu:16384,cpu:96.8,mem:10240,epoch:65},
+      {algo:'ResNet-50',acc:.8789,pre:.8723,rec:.8678,f1:.8700,auc:.9123,train:2345.6,infer:.78,throughput:1282,gpu:10240,cpu:92.3,mem:5120,epoch:42},
+      {algo:'K-Means',acc:.5234,pre:.5123,rec:.5067,f1:.5095,auc:.5567,train:67.8,infer:.34,throughput:2941,gpu:128,cpu:28.9,mem:2048,epoch:1},
+      {algo:'DBSCAN',acc:.4891,pre:.4756,rec:.4689,f1:.4722,auc:.5234,train:123.4,infer:4.56,throughput:219,gpu:256,cpu:42.3,mem:3072,epoch:1}
+    ]
+  },
+  reg:{
+    name:'回归预测（Housing Extended）',icon:'📈',
+    data:[
+      {algo:'SVM',acc:.7234,pre:.7156,rec:.7089,f1:.7122,auc:.7589,train:234.5,infer:1.89,throughput:529,gpu:512,cpu:48.6,mem:2048,epoch:1},
+      {algo:'Random Forest',acc:.7891,pre:.7823,rec:.7756,f1:.7789,auc:.8234,train:456.7,infer:2.67,throughput:375,gpu:1024,cpu:76.3,mem:4096,epoch:1},
+      {algo:'KNN',acc:.6789,pre:.6712,rec:.6645,f1:.6678,auc:.7123,train:8.9,infer:7.23,throughput:138,gpu:256,cpu:30.5,mem:6144,epoch:1},
+      {algo:'XGBoost',acc:.8123,pre:.8056,rec:.8012,f1:.8034,auc:.8456,train:678.9,infer:1.45,throughput:690,gpu:2048,cpu:83.7,mem:5120,epoch:1},
+      {algo:'CNN',acc:.7567,pre:.7489,rec:.7423,f1:.7456,auc:.7912,train:1567.8,infer:.78,throughput:1282,gpu:6144,cpu:89.3,mem:3072,epoch:38},
+      {algo:'LSTM',acc:.7823,pre:.7756,rec:.7689,f1:.7722,auc:.8234,train:2123.4,infer:1.12,throughput:893,gpu:7168,cpu:90.1,mem:4096,epoch:55},
+      {algo:'Transformer',acc:.8012,pre:.7945,rec:.7889,f1:.7917,auc:.8345,train:3456.7,infer:1.89,throughput:529,gpu:12288,cpu:94.5,mem:7168,epoch:72},
+      {algo:'ResNet-50',acc:.7678,pre:.7612,rec:.7545,f1:.7578,auc:.8012,train:2234.5,infer:.85,throughput:1176,gpu:8192,cpu:91.8,mem:4096,epoch:45},
+      {algo:'K-Means',acc:.5123,pre:.5012,rec:.4945,f1:.4978,auc:.5456,train:56.7,infer:.38,throughput:2632,gpu:128,cpu:26.3,mem:1536,epoch:1},
+      {algo:'DBSCAN',acc:.4789,pre:.4656,rec:.4589,f1:.4622,auc:.5123,train:112.3,infer:5.12,throughput:195,gpu:256,cpu:40.7,mem:2560,epoch:1}
+    ]
+  },
+  rec:{
+    name:'推荐系统（MovieLens-1M）',icon:'🎬',
+    data:[
+      {algo:'SVM',acc:.6789,pre:.6712,rec:.6645,f1:.6678,auc:.7123,train:345.6,infer:2.12,throughput:472,gpu:512,cpu:50.1,mem:2560,epoch:1},
+      {algo:'Random Forest',acc:.7234,pre:.7156,rec:.7089,f1:.7122,auc:.7589,train:523.4,infer:2.89,throughput:346,gpu:1024,cpu:79.8,mem:4608,epoch:1},
+      {algo:'KNN',acc:.6456,pre:.6378,rec:.6312,f1:.6345,auc:.6789,train:18.9,infer:7.89,throughput:127,gpu:256,cpu:33.4,mem:10240,epoch:1},
+      {algo:'XGBoost',acc:.7567,pre:.7489,rec:.7423,f1:.7456,auc:.7912,train:756.7,infer:1.67,throughput:599,gpu:2048,cpu:86.2,mem:6656,epoch:1},
+      {algo:'CNN',acc:.7891,pre:.7823,rec:.7756,f1:.7789,auc:.8234,train:2123.4,infer:.92,throughput:1087,gpu:7168,cpu:91.5,mem:3584,epoch:42},
+      {algo:'LSTM',acc:.8123,pre:.8056,rec:.8012,f1:.8034,auc:.8456,train:2856.7,infer:1.34,throughput:746,gpu:8192,cpu:92.8,mem:4608,epoch:58},
+      {algo:'Transformer',acc:.8456,pre:.8389,rec:.8345,f1:.8367,auc:.8823,train:4234.5,infer:2.01,throughput:498,gpu:14336,cpu:95.2,mem:9216,epoch:70},
+      {algo:'ResNet-50',acc:.8012,pre:.7945,rec:.7889,f1:.7917,auc:.8345,train:2678.9,infer:.95,throughput:1053,gpu:10240,cpu:93.1,mem:5120,epoch:48},
+      {algo:'K-Means',acc:.5345,pre:.5234,rec:.5167,f1:.5200,auc:.5678,train:78.9,infer:.42,throughput:2381,gpu:128,cpu:27.8,mem:2048,epoch:1},
+      {algo:'DBSCAN',acc:.5012,pre:.4878,rec:.4812,f1:.4845,auc:.5345,train:134.5,infer:4.89,throughput:204,gpu:256,cpu:41.2,mem:3072,epoch:1}
+    ]
+  }
+};
+
+const ablationData = {
+  lr:{
+    name:'学习率消融',subtitle:'Transformer - 图像分类',dim:'学习率',
+    cols:['学习率','Accuracy','F1-Score','训练时间(s)','GPU显存(MB)','收敛Epoch','稳定性'],
+    data:[
+      {lr:'1e-2',acc:.7234,f1:.7156,train:3456.7,gpu:16384,epoch:120,stability:'差'},
+      {lr:'1e-3',acc:.8534,f1:.8445,train:5678.9,gpu:16384,epoch:78,stability:'良'},
+      {lr:'1e-4',acc:.8489,f1:.8398,train:6234.5,gpu:16384,epoch:95,stability:'优'},
+      {lr:'1e-5',acc:.7823,f1:.7734,train:8912.3,gpu:16384,epoch:180,stability:'优'}
+    ],
+    keys:['lr','acc','f1','train','gpu','epoch','stability'],
+    higherBetter:[false,true,true,false,false,false,false],
+    fmt:[s=>s,v=>v.toFixed(4),v=>v.toFixed(4),v=>v.toFixed(1),v=>v,v=>v,s=>s]
+  },
+  bs:{
+    name:'Batch Size消融',subtitle:'ResNet-50 - 文本分类',dim:'Batch Size',
+    cols:['Batch Size','Accuracy','F1-Score','训练时间(s)','GPU显存(MB)','吞吐量(samples/s)'],
+    data:[
+      {bs:16,acc:.8823,f1:.8789,train:3456.7,gpu:6144,throughput:856},
+      {bs:32,acc:.8789,f1:.8756,train:2891.2,gpu:8192,throughput:1023},
+      {bs:64,acc:.8756,f1:.8723,train:2456.3,gpu:10240,throughput:1156},
+      {bs:128,acc:.8678,f1:.8645,train:2123.4,gpu:12288,throughput:1234},
+      {bs:256,acc:.8534,f1:.8489,train:1856.7,gpu:16384,throughput:1289}
+    ],
+    keys:['bs','acc','f1','train','gpu','throughput'],
+    higherBetter:[false,true,true,false,false,true],
+    fmt:[v=>v,v=>v.toFixed(4),v=>v.toFixed(4),v=>v.toFixed(1),v=>v,v=>v]
+  },
+  depth:{
+    name:'网络深度消融',subtitle:'CNN - 回归预测',dim:'层数',
+    cols:['层数','Accuracy','F1-Score','训练时间(s)','参数量(M)','GPU显存(MB)'],
+    data:[
+      {depth:2,acc:.6891,f1:.6823,train:1234.5,params:3.20,gpu:4096},
+      {depth:4,acc:.7234,f1:.7167,train:1567.8,params:6.80,gpu:5120},
+      {depth:6,acc:.7456,f1:.7389,train:1891.2,params:12.50,gpu:6144},
+      {depth:8,acc:.7567,f1:.7489,train:2234.5,params:18.90,gpu:7168},
+      {depth:12,acc:.7489,f1:.7412,train:2856.7,params:28.30,gpu:8192}
+    ],
+    keys:['depth','acc','f1','train','params','gpu'],
+    higherBetter:[false,true,true,false,false,false],
+    fmt:[v=>v,v=>v.toFixed(4),v=>v.toFixed(4),v=>v.toFixed(1),v=>v.toFixed(2),v=>v]
+  },
+  opt:{
+    name:'优化器消融',subtitle:'LSTM - 推荐系统',dim:'优化器',
+    cols:['优化器','Accuracy','F1-Score','训练时间(s)','收敛Epoch','稳定性'],
+    data:[
+      {opt:'SGD',acc:.7678,f1:.7612,train:4567.8,epoch:120,stability:'中'},
+      {opt:'Adam',acc:.8123,f1:.8034,train:2856.7,epoch:58,stability:'良'},
+      {opt:'AdamW',acc:.8234,f1:.8156,train:2934.5,epoch:55,stability:'优'},
+      {opt:'RMSProp',acc:.7912,f1:.7834,train:3123.4,epoch:65,stability:'良'}
+    ],
+    keys:['opt','acc','f1','train','epoch','stability'],
+    higherBetter:[false,true,true,false,false,false],
+    fmt:[s=>s,v=>v.toFixed(4),v=>v.toFixed(4),v=>v.toFixed(1),v=>v,s=>s]
+  },
+  aug:{
+    name:'数据增强消融',subtitle:'所有算法 - 图像分类',dim:'算法',
+    cols:['算法','无增强Accuracy','有增强Accuracy','提升幅度','无增强训练时间(s)','有增强训练时间(s)'],
+    data:[
+      {algo:'SVM',noAug:.6234,aug:.6456,diff:3.6,t1:342.5,t2:456.7},
+      {algo:'Random Forest',noAug:.6891,aug:.7123,diff:3.4,t1:567.8,t2:723.4},
+      {algo:'KNN',noAug:.5876,aug:.6012,diff:2.3,t1:12.3,t2:18.9},
+      {algo:'XGBoost',noAug:.7234,aug:.7489,diff:3.5,t1:845.2,t2:1023.4},
+      {algo:'CNN',noAug:.8156,aug:.8534,diff:4.6,t1:2456.3,t2:3125.6},
+      {algo:'LSTM',noAug:.7823,aug:.8123,diff:3.8,t1:3125.6,t2:3891.2},
+      {algo:'Transformer',noAug:.8534,aug:.8812,diff:3.3,t1:5678.9,t2:6789.1},
+      {algo:'ResNet-50',noAug:.8423,aug:.8712,diff:3.4,t1:3456.7,t2:4234.5},
+      {algo:'K-Means',noAug:.4523,aug:.4678,diff:3.4,t1:45.6,t2:67.8},
+      {algo:'DBSCAN',noAug:.4123,aug:.4256,diff:3.2,t1:89.3,t2:112.3}
+    ],
+    keys:['algo','noAug','aug','diff','t1','t2'],
+    higherBetter:[false,true,true,true,false,false],
+    fmt:[s=>s,v=>v.toFixed(4),v=>v.toFixed(4),v=>v.toFixed(1)+'%',v=>v.toFixed(1),v=>v.toFixed(1)]
+  },
+  dropout:{
+    name:'Dropout率消融',subtitle:'Transformer - 文本分类',dim:'Dropout率',
+    cols:['Dropout率','Accuracy','F1-Score','训练时间(s)','过拟合程度'],
+    data:[
+      {dropout:0,acc:.9234,f1:.9156,train:4123.4,overfit:'高'},
+      {dropout:0.1,acc:.9389,f1:.9312,train:4345.6,overfit:'中'},
+      {dropout:0.3,acc:.9456,f1:.9367,train:4567.8,overfit:'低'},
+      {dropout:0.5,acc:.9123,f1:.9045,train:4891.2,overfit:'极低'}
+    ],
+    keys:['dropout','acc','f1','train','overfit'],
+    higherBetter:[false,true,true,false,false],
+    fmt:[v=>v,v=>v.toFixed(4),v=>v.toFixed(4),v=>v.toFixed(1),s=>s]
+  },
+  act:{
+    name:'激活函数消融',subtitle:'CNN - 图像分类',dim:'激活函数',
+    cols:['激活函数','Accuracy','F1-Score','训练时间(s)','收敛Epoch','GPU显存(MB)'],
+    data:[
+      {act:'ReLU',acc:.8156,f1:.8071,train:2456.3,epoch:45,gpu:8192},
+      {act:'GELU',acc:.8234,f1:.8156,train:2567.8,epoch:42,gpu:8192},
+      {act:'SiLU',acc:.8289,f1:.8212,train:2623.4,epoch:40,gpu:8192},
+      {act:'Mish',acc:.8312,f1:.8234,train:2689.1,epoch:38,gpu:8192}
+    ],
+    keys:['act','acc','f1','train','epoch','gpu'],
+    higherBetter:[false,true,true,false,false,false],
+    fmt:[s=>s,v=>v.toFixed(4),v=>v.toFixed(4),v=>v.toFixed(1),v=>v,v=>v]
+  }
+};
+
+const mainCols = [
+  {key:'rank',label:'排名',sortable:false},
+  {key:'algo',label:'算法',sortable:true},
+  {key:'acc',label:'Accuracy',sortable:true,best:'max'},
+  {key:'pre',label:'Precision',sortable:true,best:'max'},
+  {key:'rec',label:'Recall',sortable:true,best:'max'},
+  {key:'f1',label:'F1-Score',sortable:true,best:'max'},
+  {key:'auc',label:'AUC-ROC',sortable:true,best:'max'},
+  {key:'train',label:'训练时间(s)',sortable:true,best:'min'},
+  {key:'infer',label:'推理延迟(ms)',sortable:true,best:'min'},
+  {key:'throughput',label:'吞吐量(samples/s)',sortable:true,best:'max'},
+  {key:'gpu',label:'GPU显存(MB)',sortable:true,best:'min'},
+  {key:'cpu',label:'CPU利用率(%)',sortable:true,best:'min'},
+  {key:'mem',label:'内存占用(MB)',sortable:true,best:'min'},
+  {key:'epoch',label:'收敛Epoch',sortable:true,best:'min'}
+];
+
+// ==================== 工具函数 ====================
+function fmt(v){return typeof v==='number'?v<1?v.toFixed(4):v.toFixed(1):v}
+function getAlgoType(name){const a=algos.find(x=>x.name===name);return a?a.type:''}
+function getTypeTag(type){
+  if(type.includes('经典'))return '<span class="tag tag-ml">经典ML</span>';
+  if(type.includes('深度'))return '<span class="tag tag-dl">深度学习</span>';
+  return '<span class="tag tag-cl">聚类</span>';
+}
+
+// ==================== 主实验表格 ====================
+const taskCharts = {};
+const taskState = {};
+
+function buildTaskPanel(taskKey){
+  const task = tasks[taskKey];
+  const state = {sortKey:'acc',sortDir:'desc',filters:{},search:''};
+  taskState[taskKey] = state;
+
+  const panel = document.createElement('div');
+  panel.className = 'tab-content active';
+  panel.id = 'task-'+taskKey;
+
+  // 筛选工具栏
+  const typeOptions = [...new Set(task.data.map(d=>getAlgoType(d.algo)))];
+  let filterHTML = `<div class="toolbar">
+    <input class="search-box" placeholder="搜索算法名称..." oninput="filterTask('${taskKey}',this.value,'search')">
+    <div class="filter-group">
+      <label>算法类型：</label>
+      <select class="filter-select" onchange="filterTask('${taskKey}',this.value,'type')">
+        <option value="">全部</option>
+        ${typeOptions.map(t=>`<option value="${t}">${t}</option>`).join('')}
+      </select>
+    </div>
+    <button class="reset-btn" onclick="resetFilters('${taskKey}')">重置筛选</button>
+  </div>`;
+
+  // 表格
+  let tableHTML = '<div class="table-wrap"><table id="table-'+taskKey+'"><thead><tr>';
+  mainCols.forEach(c=>{
+    const sortAttr = c.sortable ? `onclick="sortTable('${taskKey}','${c.key}')"` : '';
+    const icon = c.sortable ? `<span class="sort-icon" id="sort-${taskKey}-${c.key}">↕</span>` : '';
+    tableHTML += `<th ${sortAttr}>${c.label}${icon}</th>`;
+  });
+  tableHTML += '</tr></thead><tbody id="tbody-'+taskKey+'"></tbody></table></div>';
+
+  // 图表
+  let chartHTML = `<div class="chart-row">
+    <div class="card"><h3>性能指标对比</h3><div class="chart-container"><canvas id="chart-perf-${taskKey}"></canvas></div></div>
+    <div class="card"><h3>效率指标对比</h3><div class="chart-container"><canvas id="chart-eff-${taskKey}"></canvas></div></div>
+  </div>`;
+
+  panel.innerHTML = `<div class="card"><h3>${task.icon} ${task.name}</h3>${filterHTML}${tableHTML}</div>${chartHTML}`;
+  document.getElementById('taskPanels').appendChild(panel);
+
+  renderTaskTable(taskKey);
+  renderTaskCharts(taskKey);
+}
+
+function getFilteredData(taskKey){
+  const state = taskState[taskKey];
+  let data = [...tasks[taskKey].data];
+  if(state.filters.type) data = data.filter(d=>getAlgoType(d.algo)===state.filters.type);
+  if(state.search) data = data.filter(d=>d.algo.toLowerCase().includes(state.search.toLowerCase()));
+  return data;
+}
+
+// 计算某列的Top5排名映射：返回 { value -> rank(1-5) }
+function computeColRankMap(values, higherBetter){
+  const unique = [...new Set(values.filter(v=>typeof v==='number'))];
+  unique.sort((a,b)=>higherBetter?b-a:a-b);
+  const map = {};
+  unique.forEach((v,i)=>{if(i<5) map[v]=i+1;});
+  return map;
+}
+
+function renderTaskTable(taskKey){
+  const state = taskState[taskKey];
+  let data = getFilteredData(taskKey);
+
+  // 排序
+  const col = mainCols.find(c=>c.key===state.sortKey);
+  data.sort((a,b)=>{
+    let va=a[state.sortKey], vb=b[state.sortKey];
+    if(typeof va==='string') return state.sortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    return state.sortDir==='asc'?va-vb:vb-va;
+  });
+
+  // 对每个数值列独立计算Top5排名
+  const colRankMap = {};
+  mainCols.forEach(c=>{
+    if(!c.best) return;
+    const higherBetter = c.best==='max';
+    colRankMap[c.key] = computeColRankMap(data.map(d=>d[c.key]), higherBetter);
+  });
+
+  const tbody = document.getElementById('tbody-'+taskKey);
+  tbody.innerHTML = data.map((d,i)=>{
+    const rank = i+1;
+    const rankClass = rank<=5?'rank-'+rank:'';
+    let row = `<td class="rank-cell ${rankClass}">${rank}</td>`;
+    row += `<td>${getTypeTag(getAlgoType(d.algo))} ${d.algo}</td>`;
+    mainCols.slice(2).forEach(c=>{
+      const val = d[c.key];
+      const rMap = colRankMap[c.key];
+      const r = rMap ? rMap[val] : 0;
+      const cls = r ? 'col-rank col-rank-'+r : '';
+      row += `<td class="${cls}">${fmt(val)}</td>`;
+    });
+    return `<tr>${row}</tr>`;
+  }).join('');
+
+  // 更新排序图标
+  mainCols.forEach(c=>{
+    if(!c.sortable)return;
+    const icon = document.getElementById(`sort-${taskKey}-${c.key}`);
+    if(icon){
+      icon.className = 'sort-icon' + (c.key===state.sortKey?' active':'');
+      icon.textContent = c.key===state.sortKey?(state.sortDir==='asc'?'↑':'↓'):'↕';
+    }
+  });
+}
+
+function sortTaskTable(taskKey, key){
+  const state = taskState[taskKey];
+  if(state.sortKey===key) state.sortDir = state.sortDir==='asc'?'desc':'asc';
+  else { state.sortKey=key; state.sortDir='desc'; }
+  renderTaskTable(taskKey);
+  updateTaskCharts(taskKey);
+}
+
+function filterTask(taskKey, value, type){
+  const state = taskState[taskKey];
+  if(type==='search') state.search=value;
+  else state.filters[type]=value;
+  renderTaskTable(taskKey);
+  updateTaskCharts(taskKey);
+}
+
+function resetFilters(taskKey){
+  const state = taskState[taskKey];
+  state.filters={}; state.search='';
+  const panel = document.getElementById('task-'+taskKey);
+  panel.querySelector('.search-box').value='';
+  panel.querySelector('.filter-select').value='';
+  renderTaskTable(taskKey);
+  updateTaskCharts(taskKey);
+}
+
+function renderTaskCharts(taskKey){
+  const data = tasks[taskKey].data;
+  const labels = data.map(d=>d.algo);
+
+  // 性能指标图
+  const perfCtx = document.getElementById('chart-perf-'+taskKey).getContext('2d');
+  taskCharts['perf-'+taskKey] = new Chart(perfCtx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Accuracy',data:data.map(d=>d.acc),backgroundColor:'rgba(67,97,238,.7)',borderRadius:4},
+        {label:'F1-Score',data:data.map(d=>d.f1),backgroundColor:'rgba(247,37,133,.7)',borderRadius:4},
+        {label:'AUC-ROC',data:data.map(d=>d.auc),backgroundColor:'rgba(114,9,183,.7)',borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded'}}},
+      scales:{y:{beginAtZero:false,min:.3,grid:{color:'var(--chart-grid)'}},x:{grid:{display:false}}}
+    }
+  });
+
+  // 效率指标图
+  const effCtx = document.getElementById('chart-eff-'+taskKey).getContext('2d');
+  taskCharts['eff-'+taskKey] = new Chart(effCtx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'训练时间(s)',data:data.map(d=>d.train),backgroundColor:'rgba(76,201,240,.7)',borderRadius:4,yAxisID:'y'},
+        {label:'吞吐量(samples/s)',data:data.map(d=>d.throughput),backgroundColor:'rgba(252,163,17,.7)',borderRadius:4,yAxisID:'y1'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded'}}},
+      scales:{
+        y:{type:'linear',position:'left',grid:{color:'var(--chart-grid)'},title:{display:true,text:'训练时间(s)'}},
+        y1:{type:'linear',position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'吞吐量'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+function updateTaskCharts(taskKey){
+  const data = getFilteredData(taskKey);
+  const labels = data.map(d=>d.algo);
+  const perfChart = taskCharts['perf-'+taskKey];
+  const effChart = taskCharts['eff-'+taskKey];
+  if(perfChart){
+    perfChart.data.labels=labels;
+    perfChart.data.datasets[0].data=data.map(d=>d.acc);
+    perfChart.data.datasets[1].data=data.map(d=>d.f1);
+    perfChart.data.datasets[2].data=data.map(d=>d.auc);
+    perfChart.update();
+  }
+  if(effChart){
+    effChart.data.labels=labels;
+    effChart.data.datasets[0].data=data.map(d=>d.train);
+    effChart.data.datasets[1].data=data.map(d=>d.throughput);
+    effChart.update();
+  }
+}
+
+// ==================== 消融实验 ====================
+const ablationCharts = {};
+
+function buildAblationPanel(key){
+  const ab = ablationData[key];
+  const panel = document.createElement('div');
+  const isFirst = !document.getElementById('ablationPanels').querySelector('.tab-content');
+  panel.className = 'tab-content' + (isFirst?' active':'');
+  panel.id = 'ablation-'+key;
+
+  let tableHTML = '<div class="table-wrap"><table><thead><tr>';
+  ab.cols.forEach((c,i)=>{
+    tableHTML += `<th onclick="sortAblation('${key}',${i})">${c}<span class="sort-icon" id="asort-${key}-${i}">↕</span></th>`;
+  });
+  tableHTML += '</tr></thead><tbody id="abody-'+key+'"></tbody></table></div>';
+
+  let chartHTML = `<div class="chart-row">
+    <div class="card"><h3>${ab.dim} vs Accuracy / F1</h3><div class="chart-container"><canvas id="achart-perf-${key}"></canvas></div></div>
+    <div class="card"><h3>${ab.dim} vs 训练效率</h3><div class="chart-container"><canvas id="achart-eff-${key}"></canvas></div></div>
+  </div>`;
+
+  panel.innerHTML = `<div class="card"><h3>${ab.name}</h3><p style="color:var(--text2);margin-bottom:16px">${ab.subtitle}</p>${tableHTML}</div>${chartHTML}`;
+  document.getElementById('ablationPanels').appendChild(panel);
+
+  renderAblationTable(key, null, 'desc');
+  renderAblationCharts(key);
+}
+
+function renderAblationTable(key, sortIdx, sortDir){
+  const ab = ablationData[key];
+  let data = [...ab.data];
+
+  if(sortIdx!==null){
+    const k = ab.keys[sortIdx];
+    data.sort((a,b)=>{
+      const va=a[k],vb=b[k];
+      if(typeof va==='string') return sortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+      return sortDir==='asc'?va-vb:vb-va;
+    });
+  }
+
+  // 对每个数值列独立计算Top5排名
+  const colRankMap = {};
+  ab.keys.forEach((k,i)=>{
+    if(ab.higherBetter[i]===undefined) return;
+    colRankMap[k] = computeColRankMap(data.map(d=>d[k]), ab.higherBetter[i]);
+  });
+
+  const tbody = document.getElementById('abody-'+key);
+  tbody.innerHTML = data.map((d,rowIdx)=>{
+    let row = '';
+    ab.keys.forEach((k,colIdx)=>{
+      const val = d[k];
+      const rMap = colRankMap[k];
+      const r = rMap ? rMap[val] : 0;
+      const cls = r ? 'col-rank col-rank-'+r : '';
+      row += `<td class="${cls}">${ab.fmt[colIdx](val)}</td>`;
+    });
+    return `<tr>${row}</tr>`;
+  }).join('');
+}
+
+function sortAblation(key, idx){
+  const icon = document.getElementById(`asort-${key}-${idx}`);
+  const currentDir = icon.textContent==='↑'?'asc':icon.textContent==='↓'?'desc':null;
+  const newDir = currentDir==='desc'?'asc':'desc';
+
+  // reset all icons
+  ablationData[key].keys.forEach((_,i)=>{
+    const ic = document.getElementById(`asort-${key}-${i}`);
+    if(ic){ic.className='sort-icon';ic.textContent='↕';}
+  });
+  icon.className='sort-icon active';
+  icon.textContent=newDir==='asc'?'↑':'↓';
+
+  renderAblationTable(key, idx, newDir);
+}
+
+function renderAblationCharts(key){
+  const ab = ablationData[key];
+  const labels = ab.data.map(d=>ab.fmt[0](d[ab.keys[0]]));
+
+  // 性能图
+  const pCtx = document.getElementById('achart-perf-'+key).getContext('2d');
+  ablationCharts['perf-'+key] = new Chart(pCtx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Accuracy',data:ab.data.map(d=>d.acc),borderColor:'#4361ee',backgroundColor:'rgba(67,97,238,.1)',fill:true,tension:.3,pointRadius:6,pointHoverRadius:9},
+        {label:'F1-Score',data:ab.data.map(d=>d.f1),borderColor:'#f72585',backgroundColor:'rgba(247,37,133,.1)',fill:true,tension:.3,pointRadius:6,pointHoverRadius:9}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{usePointStyle:true}}},
+      scales:{y:{grid:{color:'var(--chart-grid)'}},x:{grid:{display:false}}}
+    }
+  });
+
+  // 效率图
+  const eCtx = document.getElementById('achart-eff-'+key).getContext('2d');
+  const trainKey = ab.keys.includes('train')?'train':'t1';
+  const hasEpoch = ab.keys.includes('epoch');
+  const datasets = [{label:'训练时间(s)',data:ab.data.map(d=>d[trainKey]),borderColor:'#4cc9f0',backgroundColor:'rgba(76,201,240,.1)',fill:true,tension:.3,pointRadius:6,yAxisID:'y'}];
+  if(hasEpoch) datasets.push({label:'收敛Epoch',data:ab.data.map(d=>d.epoch),borderColor:'#f77f00',backgroundColor:'rgba(247,127,0,.1)',fill:true,tension:.3,pointRadius:6,yAxisID:'y1'});
+
+  ablationCharts['eff-'+key] = new Chart(eCtx,{
+    type:'line',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{usePointStyle:true}}},
+      scales:{
+        y:{position:'left',grid:{color:'var(--chart-grid)'},title:{display:true,text:'训练时间(s)'}},
+        ...(hasEpoch?{y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Epoch'}}}:{}),
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ==================== 综合分析图表 ====================
+function buildSummaryCharts(){
+  // 散点图：效率 vs 精度
+  const scatterData = algos.map((a,i)=>{
+    const avgAcc = Object.values(tasks).reduce((s,t)=>s+t.data[i].acc,0)/4;
+    const avgTrain = Object.values(tasks).reduce((s,t)=>s+t.data[i].train,0)/4;
+    return {x:avgTrain,y:avgAcc,label:a.name,type:a.type};
+  });
+
+  const scatterColors = scatterData.map(d=>d.type.includes('经典')?'#4361ee':d.type.includes('深度')?'#f72585':'#06d6a0');
+  new Chart(document.getElementById('scatterChart').getContext('2d'),{
+    type:'scatter',
+    data:{datasets:[{
+      data:scatterData.map(d=>({x:d.x,y:d.y})),
+      backgroundColor:scatterColors,
+      pointRadius:10,pointHoverRadius:14,
+      pointStyle:scatterData.map(d=>d.type.includes('经典')?'rect':d.type.includes('深度')?'circle':'triangle')
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>{const d=scatterData[ctx.dataIndex];return `${d.label}: Acc=${d.y.toFixed(4)}, Train=${d.x.toFixed(0)}s`}}}
+      },
+      scales:{
+        x:{title:{display:true,text:'平均训练时间(s)'},grid:{color:'var(--chart-grid)'}},
+        y:{title:{display:true,text:'平均Accuracy'},grid:{color:'var(--chart-grid)'}}
+      }
+    }
+  });
+
+  // 热力图
+  const heatmapContainer = document.getElementById('heatmapContainer');
+  const taskKeys = Object.keys(tasks);
+  const metricKeys = ['acc','f1','train','gpu'];
+  const metricLabels = ['Accuracy','F1-Score','训练时间(s)','GPU显存(MB)'];
+
+  let html = '<div style="overflow-x:auto">';
+  html += '<table style="width:100%"><thead><tr><th>算法</th>';
+  taskKeys.forEach(tk=>{html += `<th colspan="${metricKeys.length}" style="text-align:center">${tasks[tk].name.split('（')[0]}</th>`;});
+  html += '</tr><tr><th></th>';
+  taskKeys.forEach(()=>{metricKeys.forEach((mk,mi)=>{html += `<th style="font-size:.8em">${metricLabels[mi]}</th>`;});});
+  html += '</tr></thead><tbody>';
+
+  algos.forEach((a,ai)=>{
+    html += `<tr><td><b>${a.name}</b></td>`;
+    taskKeys.forEach(tk=>{
+      const d = tasks[tk].data[ai];
+      metricKeys.forEach(mk=>{
+        const val = d[mk];
+        const allVals = tasks[tk].data.map(x=>x[mk]);
+        const min = Math.min(...allVals), max = Math.max(...allVals);
+        const norm = (val-min)/(max-min);
+        const isLowerBetter = mk==='train'||mk==='gpu';
+        const hue = isLowerBetter?(1-norm)*120:norm*120;
+        const bg = `hsl(${hue},70%,45%)`;
+        html += `<td style="background:${bg};color:#fff;text-align:center;font-size:.85em;font-weight:600;border-radius:4px;padding:8px">${fmt(val)}</td>`;
+      });
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  heatmapContainer.innerHTML = html;
+
+  // 雷达图
+  const radarLabels = ['Accuracy','F1-Score','训练效率','推理速度','内存效率'];
+  const radarAlgos = ['XGBoost','CNN','Transformer','ResNet-50'];
+  const radarDS = radarAlgos.map((name,ri)=>{
+    const ai = algos.findIndex(a=>a.name===name);
+    const avgAcc = Object.values(tasks).reduce((s,t)=>s+t.data[ai].acc,0)/4;
+    const avgF1 = Object.values(tasks).reduce((s,t)=>s+t.data[ai].f1,0)/4;
+    const avgTrain = Object.values(tasks).reduce((s,t)=>s+t.data[ai].train,0)/4;
+    const avgInfer = Object.values(tasks).reduce((s,t)=>s+t.data[ai].infer,0)/4;
+    const avgMem = Object.values(tasks).reduce((s,t)=>s+t.data[ai].mem,0)/4;
+    // normalize to 0-1
+    const trainEff = 1 - (avgTrain-10)/(9000-10);
+    const inferEff = 1 - (avgInfer-0.3)/(9-0.3);
+    const memEff = 1 - (avgMem-128)/(16384-128);
+    return {
+      label:name,
+      data:[avgAcc,avgF1,trainEff,inferEff,memEff],
+      borderColor:COLORS.warm[ri],
+      backgroundColor:COLORS.warm[ri]+'33',
+      pointRadius:5
+    };
+  });
+
+  new Chart(document.getElementById('radarChart').getContext('2d'),{
+    type:'radar',
+    data:{labels:radarLabels,datasets:radarDS},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{usePointStyle:true}}},
+      scales:{r:{min:0,max:1,grid:{color:'var(--chart-grid)'},pointLabels:{font:{size:13}}}}
+    }
+  });
+}
+
+// ==================== Tab切换 ====================
+function switchTab(tab){
+  document.querySelectorAll('#mainTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#mainTabs .tab-btn').forEach(b=>{if(b.textContent.includes(tab==='main'?'主实验':tab==='ablation'?'消融':'综合'))b.classList.add('active')});
+  document.querySelectorAll('.container>.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+function switchTaskTab(task){
+  document.querySelectorAll('#taskTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('#taskPanels .tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('task-'+task).classList.add('active');
+}
+
+// ==================== 主题切换 ====================
+function toggleTheme(){
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',isDark?'':'dark');
+  document.querySelector('.theme-toggle').textContent = isDark?'🌙':'☀️';
+}
+
+// ==================== 初始化 ====================
+document.addEventListener('DOMContentLoaded',()=>{
+  // 构建主实验面板
+  ['img','nlp','reg','rec'].forEach(buildTaskPanel);
+
+  // 构建消融实验按钮和面板
+  const ablationBtns = document.getElementById('ablationBtns');
+  Object.entries(ablationData).forEach(([key,ab],i)=>{
+    const btn = document.createElement('button');
+    btn.textContent = ab.name;
+    btn.className = i===0?'active':'';
+    btn.onclick = ()=>{
+      ablationBtns.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('#ablationPanels .tab-content').forEach(c=>c.classList.remove('active'));
+      document.getElementById('ablation-'+key).classList.add('active');
+    };
+    ablationBtns.appendChild(btn);
+  });
+  Object.keys(ablationData).forEach(buildAblationPanel);
+
+  // 综合分析图表
+  buildSummaryCharts();
+
+  // 绑定主实验表格排序
+  window.sortTable = function(taskKey, key){sortTaskTable(taskKey, key)};
+  window.filterTask = filterTask;
+  window.resetFilters = resetFilters;
+  window.sortAblation = sortAblation;
+  window.switchTab = switchTab;
+  window.switchTaskTab = switchTaskTab;
+  window.toggleTheme = toggleTheme;
+});
+</script>
+</body>
+</html>
