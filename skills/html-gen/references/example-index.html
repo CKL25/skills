@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML 生成工具示例索引</title>
+  <style>
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-card: #0f3460;
+      --text-primary: #e4e4e4;
+      --text-secondary: #a0a0a0;
+      --accent: #e94560;
+      --border: #2a2a4a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent), #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      color: var(--text-secondary);
+      font-size: 1.1em;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .category-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 24px;
+      transition: transform 0.2s;
+    }
+
+    .category-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .category-card h2 {
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-size: 1.3em;
+    }
+
+    .category-card .icon {
+      font-size: 2em;
+      margin-bottom: 12px;
+    }
+
+    .example-list {
+      list-style: none;
+    }
+
+    .example-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .example-list li:last-child {
+      border-bottom: none;
+    }
+
+    .example-list a {
+      color: var(--text-primary);
+      text-decoration: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .example-list a:hover {
+      color: var(--accent);
+    }
+
+    .example-list .tag {
+      background: var(--bg-secondary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      color: var(--text-secondary);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>HTML 生成工具</h1>
+      <p>使用 html-gen skill 生成的交互式 HTML 示例</p>
+    </header>
+
+    <div class="category-grid">
+      <div class="category-card">
+        <div class="icon">🔍</div>
+        <h2>探索与规划</h2>
+        <ul class="example-list">
+          <li><a href="exploration-comparison.html">方案对比表</a> <span class="tag">静态</span></li>
+          <li><a href="exploration-matrix.html">决策矩阵</a> <span class="tag">交互</span></li>
+        </ul>
+      </div>
+
+      <div class="category-card">
+        <div class="icon">👁️</div>
+        <h2>代码审查</h2>
+        <ul class="example-list">
+          <li><a href="review-pr.html">PR 注释视图</a> <span class="tag">静态</span></li>
+          <li><a href="review-modules.html">模块关系图</a> <span class="tag">SVG</span></li>
+        </ul>
+      </div>
+
+      <div class="category-card">
+        <div class="icon">🎨</div>
+        <h2>设计</h2>
+        <ul class="example-list">
+          <li><a href="design-palette.html">色板展示</a> <span class="tag">静态</span></li>
+          <li><a href="design-variants.html">组件变体</a> <span class="tag">静态</span></li>
+        </ul>
+      </div>
+
+      <div class="category-card">
+        <div class="icon">🔧</div>
+        <h2>原型开发</h2>
+        <ul class="example-list">
+          <li><a href="proto-kanban.html">看板</a> <span class="tag">交互</span></li>
+          <li><a href="proto-flow.html">流程图编辑器</a> <span class="tag">交互</span></li>
+        </ul>
+      </div>
+
+      <div class="category-card">
+        <div class="icon">📊</div>
+        <h2>图表与插图</h2>
+        <ul class="example-list">
+          <li><a href="charts-flowchart.html">流程图</a> <span class="tag">SVG</span></li>
+          <li><a href="charts-pie.html">饼图</a> <span class="tag">Chart.js</span></li>
+        </ul>
+      </div>
+
+      <div class="category-card">
+        <div class="icon">🎤</div>
+        <h2>演示文稿</h2>
+        <ul class="example-list">
+          <li><a href="slides-basic.html">基础幻灯片</a> <span class="tag">键盘控制</span></li>
+        </ul>
+      </div>
+
+      <div class="category-card">
+        <div class="icon">📚</div>
+        <h2>研究与学习</h2>
+        <ul class="example-list">
+          <li><a href="research-concept.html">概念解释</a> <span class="tag">交互</span></li>
+          <li><a href="research-deepdive.html">技术深潜</a> <span class="tag">标签页</span></li>
+        </ul>
+      </div>
+
+      <div class="category-card">
+        <div class="icon">📈</div>
+        <h2>报告</h2>
+        <ul class="example-list">
+          <li><a href="report-weekly.html">周报</a> <span class="tag">静态</span></li>
+          <li><a href="report-timeline.html">事故时间线</a> <span class="tag">静态</span></li>
+        </ul>
+      </div>
+
+      <div class="category-card">
+        <div class="icon">✏️</div>
+        <h2>自定义编辑器</h2>
+        <ul class="example-list">
+          <li><a href="editor-toggles.html">功能开关</a> <span class="tag">导出</span></li>
+          <li><a href="editor-prompt.html">提示词调优</a> <span class="tag">导出</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <footer>
+      <p>由 html-gen skill 生成 | 配置文件: .html-gen-config.json</p>
+    </footer>
+  </div>
+</body>
+</html>

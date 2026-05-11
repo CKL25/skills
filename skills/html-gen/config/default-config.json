@@ -1,0 +1,100 @@
+{
+  "default_theme": "dark",
+  "default_interaction": "auto",
+  "responsive": "auto",
+  "use_cdn": true,
+  "export_editors": true,
+  "themes": {
+    "dark": {
+      "name": "现代暗色",
+      "bg_primary": "#1a1a2e",
+      "bg_secondary": "#16213e",
+      "bg_card": "#0f3460",
+      "text_primary": "#e4e4e4",
+      "text_secondary": "#a0a0a0",
+      "accent": "#e94560",
+      "border": "#2a2a4a",
+      "success": "#4caf50",
+      "warning": "#ff9800",
+      "error": "#f44336"
+    },
+    "light": {
+      "name": "简洁亮色",
+      "bg_primary": "#ffffff",
+      "bg_secondary": "#f5f5f5",
+      "bg_card": "#ffffff",
+      "text_primary": "#333333",
+      "text_secondary": "#666666",
+      "accent": "#e94560",
+      "border": "#e0e0e0",
+      "success": "#4caf50",
+      "warning": "#ff9800",
+      "error": "#f44336"
+    },
+    "vibrant": {
+      "name": "活力彩色",
+      "bg_primary": "#0a0a23",
+      "bg_secondary": "#1a1a3e",
+      "bg_card": "#2a1a4e",
+      "text_primary": "#ffffff",
+      "text_secondary": "#b0b0d0",
+      "accent": "#ff6b6b",
+      "accent_secondary": "#4ecdc4",
+      "border": "#3a3a5a",
+      "success": "#51cf66",
+      "warning": "#ffd43b",
+      "error": "#ff6b6b"
+    },
+    "minimal": {
+      "name": "极简黑白",
+      "bg_primary": "#000000",
+      "bg_secondary": "#111111",
+      "bg_card": "#1a1a1a",
+      "text_primary": "#ffffff",
+      "text_secondary": "#888888",
+      "accent": "#ffffff",
+      "border": "#333333",
+      "success": "#00ff00",
+      "warning": "#ffff00",
+      "error": "#ff0000"
+    }
+  },
+  "category_defaults": {
+    "exploration": {
+      "interaction": "static",
+      "export": false
+    },
+    "code-review": {
+      "interaction": "static",
+      "export": false
+    },
+    "design": {
+      "interaction": "static",
+      "export": false
+    },
+    "prototyping": {
+      "interaction": "interactive",
+      "export": false
+    },
+    "charts": {
+      "interaction": "static",
+      "export": false
+    },
+    "presentations": {
+      "interaction": "interactive",
+      "export": false
+    },
+    "research": {
+      "interaction": "interactive",
+      "export": false
+    },
+    "reports": {
+      "interaction": "static",
+      "export": false
+    },
+    "editors": {
+      "interaction": "interactive",
+      "export": true
+    }
+  }
+}
